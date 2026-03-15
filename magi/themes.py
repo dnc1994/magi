@@ -11,6 +11,7 @@ class Theme:
     border: str     # panel border color
     dim: str        # secondary / dim text
     scanlines: bool # amber-only decorative hint
+    dark: bool = True  # all MAGI themes are dark; satisfies Textual's .dark checks
 
 
 THEMES: list[Theme] = [

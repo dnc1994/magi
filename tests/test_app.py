@@ -153,3 +153,30 @@ async def test_magi_panel_voted_rejected():
         panel.set_state("VOTED", "REJECTED")
         badge = str(pilot.app.query_one("#badge", Static).content)
         assert "REJECTED" in badge
+
+
+from magi.app import MagiApp
+
+
+@pytest.mark.asyncio
+async def test_full_app_mounts():
+    async with MagiApp().run_test(size=(140, 40)) as pilot:
+        assert pilot.app.query_one(MagiHeader) is not None
+        assert len(pilot.app.query(MagiPanel)) == 3
+        assert pilot.app.query_one(VerdictBanner) is not None
+        assert pilot.app.query_one(ActivityLog) is not None
+        assert pilot.app.query_one(Sidebar) is not None
+        assert pilot.app.query_one(InputBar) is not None
+
+
+@pytest.mark.asyncio
+async def test_theme_cycles():
+    from magi.themes import THEMES
+    async with MagiApp().run_test(size=(140, 40)) as pilot:
+        assert pilot.app.current_theme is THEMES[0]  # Amber
+        await pilot.press("t")
+        assert pilot.app.current_theme is THEMES[1]  # Blue
+        await pilot.press("t")
+        assert pilot.app.current_theme is THEMES[2]  # Red Alert
+        await pilot.press("t")
+        assert pilot.app.current_theme is THEMES[0]  # Back to Amber
