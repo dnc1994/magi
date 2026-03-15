@@ -43,7 +43,7 @@ class VerdictBanner(Widget):
         pending = 3 - approved - rejected
         self.query_one("#verdict-text", Static).update(
             f"[{t.accent}]✓ {approved} APPROVE[/]  [{t.dim}]·[/]  "
-            f"[bold red]✗ {rejected} REJECT[/]  [{t.dim}]·[/]  "
+            f"[{t.primary}]✗ {rejected} REJECT[/]  [{t.dim}]·[/]  "
             f"[{t.dim}]⟳ {pending} PENDING[/]"
         )
 
@@ -58,4 +58,3 @@ class VerdictBanner(Widget):
         if not self.is_attached:
             return
         self.styles.background = theme.background
-        self.reset()

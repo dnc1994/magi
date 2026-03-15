@@ -135,5 +135,5 @@ class MagiPanel(Widget):
             if self._vote_outcome == "APPROVED":
                 text = f"[bold {t.accent}][ ✓  APPROVED  ][/]"
             else:
-                text = f"[bold red][ ✗  REJECTED  ][/]"
+                text = f"[bold {t.primary}][ ✗  REJECTED  ][/]"
         self.query_one("#badge", Static).update(text)

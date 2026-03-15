@@ -128,6 +128,7 @@ class MagiApp(App):
             ]:
                 if hasattr(widget, "theme"):
                     widget.theme = theme  # type: ignore[attr-defined]
+            self.query_one(ActivityLog).apply_theme(theme)
         except Exception:
             pass
 
@@ -142,7 +143,8 @@ class MagiApp(App):
         elif event.key == "t":
             event.prevent_default()
             event.stop()
-            self.action_cycle_theme()
+            if self._voting_state != "VERDICT":
+                self.action_cycle_theme()
         elif event.key == "q":
             self.exit()
 
