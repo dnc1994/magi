@@ -6,6 +6,7 @@ from magi.widgets.header import MagiHeader
 from magi.widgets.activity_log import ActivityLog
 from magi.widgets.sidebar import Sidebar
 from magi.widgets.verdict import VerdictBanner
+from magi.widgets.input_bar import InputBar
 
 
 class HeaderTestApp(App):
@@ -71,3 +72,46 @@ async def test_verdict_banner_shows_verdict():
         banner.show_verdict("APPROVED (2–1)")
         content = str(pilot.app.query_one("#verdict-text", Static).content)
         assert "APPROVED" in content
+
+
+class InputBarTestApp(App):
+    def compose(self) -> ComposeResult:
+        yield InputBar()
+
+
+@pytest.mark.asyncio
+async def test_input_bar_mounts():
+    async with InputBarTestApp().run_test() as pilot:
+        assert pilot.app.query_one(InputBar) is not None
+
+
+@pytest.mark.asyncio
+async def test_input_bar_cycle_preload():
+    from magi.proposals import PROPOSALS
+    async with InputBarTestApp().run_test() as pilot:
+        bar = pilot.app.query_one(InputBar)
+        bar.cycle_preload()
+        from textual.widgets import Input
+        inp = pilot.app.query_one(Input)
+        assert inp.value == PROPOSALS[0]
+        bar.cycle_preload()
+        assert inp.value == PROPOSALS[1]
+
+
+@pytest.mark.asyncio
+async def test_input_bar_reset_clears():
+    async with InputBarTestApp().run_test() as pilot:
+        bar = pilot.app.query_one(InputBar)
+        bar.cycle_preload()
+        bar.reset()
+        from textual.widgets import Input
+        assert pilot.app.query_one(Input).value == ""
+
+
+@pytest.mark.asyncio
+async def test_input_bar_disable_prevents_submit():
+    async with InputBarTestApp().run_test() as pilot:
+        bar = pilot.app.query_one(InputBar)
+        bar.disable()
+        from textual.widgets import Input
+        assert pilot.app.query_one(Input).disabled
