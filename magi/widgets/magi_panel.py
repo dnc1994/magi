@@ -72,6 +72,7 @@ class MagiPanel(Widget):
     }
     MagiPanel #trace {
         height: 1fr;
+        overflow-y: auto;
     }
     MagiPanel #badge {
         height: 3;
@@ -218,9 +219,9 @@ class MagiPanel(Widget):
         if not self._trace_buf:
             return
         t = self.theme
-        lines = self._trace_buf.splitlines()
-        visible = "\n".join(lines[-8:])
-        self.query_one("#trace", Static).update(f"[{t.dim}]{visible}[/]")
+        trace = self.query_one("#trace", Static)
+        trace.update(f"[{t.dim}]{self._trace_buf}[/]")
+        trace.scroll_end(animate=False)
 
     def _refresh_divider(self) -> None:
         t = self.theme
