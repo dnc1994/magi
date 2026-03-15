@@ -4,6 +4,8 @@ A terminal GUI simulating the MAGI supercomputer voting system from Neon Genesis
 
 MELCHIOR-1, BALTHASAR-2, and CASPAR-3 independently deliberate on proposals and cast votes. Watch the drama unfold.
 
+![MAGI System demo](magi-demo.gif)
+
 ## Setup
 
 ```bash
