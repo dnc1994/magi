@@ -180,3 +180,8 @@ async def test_theme_cycles():
         assert pilot.app.current_theme is THEMES[2]  # Red Alert
         await pilot.press("t")
         assert pilot.app.current_theme is THEMES[0]  # Back to Amber
+
+
+def test_main_module_importable():
+    from magi.main import main
+    assert callable(main)
