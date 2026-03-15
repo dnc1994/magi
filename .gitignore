@@ -5,3 +5,5 @@ dist/
 *.egg-info/
 .superpowers/
 .env
+
+.DS_Store
