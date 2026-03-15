@@ -39,7 +39,7 @@ _PERSONAS: dict[str, dict[str, str]] = {
         ),
         "prompt": (
             "Generate an internal deliberation trace converging on this verdict. "
-            "2-3 paragraphs, each 1-2 sentences. Keep each paragraph tight. Pure signal. No emotion. No instinct."
+            "3 paragraphs, each 1-2 sentences. Keep each paragraph tight. Pure signal. No emotion. No instinct."
         ),
     },
     "BALTHASAR": {
@@ -54,7 +54,7 @@ _PERSONAS: dict[str, dict[str, str]] = {
         ),
         "prompt": (
             "Generate an internal deliberation trace converging on this verdict. "
-            "2-3 paragraphs, each 1-2 sentences. Keep each paragraph tight. Instinct-driven. Protective. Primal."
+            "3 paragraphs, each 1-2 sentences. Keep each paragraph tight. Instinct-driven. Protective. Primal."
         ),
     },
     "CASPAR": {
@@ -69,7 +69,7 @@ _PERSONAS: dict[str, dict[str, str]] = {
         ),
         "prompt": (
             "Generate an internal deliberation trace converging on this verdict. "
-            "2-3 paragraphs, each 1-2 sentences. Keep each paragraph tight. Emotionally ambivalent. Contradictory. Personal."
+            "3 paragraphs, each 1-2 sentences. Keep each paragraph tight. Emotionally ambivalent. Contradictory. Personal."
         ),
     },
 }
@@ -122,7 +122,7 @@ async def stream_deliberation(
         ],
         "generationConfig": {
             "temperature": 1.0,
-            "maxOutputTokens": 200,
+            "maxOutputTokens": 350,
         },
     }
 
