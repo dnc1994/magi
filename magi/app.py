@@ -56,6 +56,10 @@ class MagiApp(App):
         super().__init__()
         self._voting_state: str = "IDLE"   # IDLE | DELIBERATING | VERDICT
         self._session: VotingSession | None = None
+        self._pending_votes: dict[int, VoteCast] = {}
+        self._llm_complete: set[str] = set()
+        self._language: str = "ZH"
+        self._post_verdict: bool = False
 
     # ── Expose current_theme for tests ────────────────────────────────────────
     # We intercept the property but only return our MAGI Theme when it's safe.
@@ -135,32 +139,52 @@ class MagiApp(App):
     # ── Input handling ────────────────────────────────────────────────────────
 
     def on_key(self, event: events.Key) -> None:
+        input_widget = self.query_one("#proposal-input", Input)
         if event.key == "tab":
             event.prevent_default()
             event.stop()
             if self._voting_state == "IDLE":
                 self.query_one(InputBar).cycle_preload()
+        elif event.key == "enter":
+            event.prevent_default()
+            event.stop()
+            if self.focused is input_widget:
+                if self._voting_state == "IDLE":
+                    proposal = self.query_one(InputBar).get_value()
+                    if proposal:
+                        self._start_vote(proposal)
+            else:
+                if self._post_verdict:
+                    self.query_one(VerdictBanner).reset()
+                    self._post_verdict = False
+                input_widget.focus()
+        elif event.key == "escape":
+            event.prevent_default()
+            event.stop()
+            if self.focused is input_widget:
+                self.set_focus(None)
         elif event.key == "t":
             event.prevent_default()
             event.stop()
             if self._voting_state != "VERDICT":
                 self.action_cycle_theme()
+        elif event.key == "l":
+            event.prevent_default()
+            event.stop()
+            self._language = "ZH" if self._language == "EN" else "EN"
+            self.query_one(Sidebar).language = self._language
+            self.query_one(ActivityLog).add_entry(f"LANG CHANGED → {self._language}")
         elif event.key == "q":
             self.exit()
-
-    def on_input_submitted(self, event: Input.Submitted) -> None:
-        if self._voting_state != "IDLE":
-            return
-        proposal = self.query_one(InputBar).get_value()
-        if not proposal:
-            return
-        self._start_vote(proposal)
 
     # ── Voting workflow ───────────────────────────────────────────────────────
 
     def _start_vote(self, proposal: str) -> None:
         self._voting_state = "DELIBERATING"
         self._session = VotingSession(proposal)
+        self._pending_votes = {}
+        self._llm_complete = set()
+        self._post_verdict = False
         outcomes = generate_votes()
 
         self.query_one(InputBar).disable()
@@ -169,8 +193,8 @@ class MagiApp(App):
         self.query_one(ActivityLog).add_entry(f"PROPOSAL SUBMITTED: {proposal}")
 
         panels = list(self.query(MagiPanel))
-        for panel in panels:
-            panel.set_state("DELIBERATING")
+        for panel, outcome in zip(panels, outcomes):
+            panel.set_state("DELIBERATING", outcome=outcome.value, proposal=proposal, language=self._language)
 
         for i, outcome in enumerate(outcomes):
             self._deliberate(i, outcome)
@@ -181,26 +205,34 @@ class MagiApp(App):
         await asyncio.sleep(delay)
         self.post_message(VoteCast(COMPUTER_NAMES[computer_idx], outcome))
 
-    def on_vote_cast(self, message: VoteCast) -> None:
+    def on_magi_panel_llm_complete(self, message: MagiPanel.LlmComplete) -> None:
+        """LLM stream done — show badge, record vote, check verdict immediately."""
         if self._session is None:
             return
-        self._session.record_vote(message.computer_name, message.outcome)
+        self._llm_complete.add(message.computer_name)
+        if message.outcome:
+            idx = COMPUTER_NAMES.index(message.computer_name)
+            panels = list(self.query(MagiPanel))
+            panels[idx].set_state("VOTED", message.outcome)
+            outcome_enum = VoteOutcome(message.outcome)
+            self._session.record_vote(message.computer_name, outcome_enum)
+            self.query_one(ActivityLog).add_entry(
+                f"{message.computer_name} → {message.outcome}"
+            )
+            self.query_one(VerdictBanner).update_tally(
+                self._session.approved_count,
+                self._session.rejected_count,
+            )
+        self._check_verdict()
 
-        # Update the relevant panel
-        panels = list(self.query(MagiPanel))
-        idx = COMPUTER_NAMES.index(message.computer_name)
-        panels[idx].set_state("VOTED", message.outcome.value)
+    def on_vote_cast(self, message: VoteCast) -> None:
+        """VoteCast fires after deliberation delay — no longer needed for verdict gating."""
 
-        # Update tally
-        self.query_one(VerdictBanner).update_tally(
-            self._session.approved_count,
-            self._session.rejected_count,
-        )
-        self.query_one(ActivityLog).add_entry(
-            f"{message.computer_name} → {message.outcome.value}"
-        )
-
-        if self._session.is_complete:
+    def _check_verdict(self) -> None:
+        if (self._voting_state != "VERDICT"
+                and self._session
+                and len(self._llm_complete) == 3
+                and self._session.is_complete):
             self._finalize_verdict()
 
     def _finalize_verdict(self) -> None:
@@ -213,15 +245,16 @@ class MagiApp(App):
         self.query_one(Sidebar).increment_votes()
         self.query_one(MagiHeader).set_alert(False)
 
-        self.set_timer(3.0, self._reset_vote)
+        self.set_timer(5.0, self._reset_vote)
 
     def _reset_vote(self) -> None:
         self._voting_state = "IDLE"
         self._session = None
+        self._post_verdict = True
 
+        # Panels stay in VOTED state so traces remain visible.
         for panel in self.query(MagiPanel):
-            panel.set_state("IDLE")
-
-        self.query_one(VerdictBanner).reset()
+            panel.freeze_badge()
+        # Verdict stays visible (frozen) until input is refocused.
+        self.query_one(VerdictBanner).freeze()
         self.query_one(InputBar).reset()
-        self.query_one(InputBar).focus()

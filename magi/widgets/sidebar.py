@@ -16,6 +16,7 @@ class Sidebar(Widget):
     """
 
     theme: reactive[Theme] = reactive(THEMES[0])
+    language: reactive[str] = reactive("ZH")
     _uptime: reactive[int] = reactive(0)
     _votes_cast: reactive[int] = reactive(0)
 
@@ -40,6 +41,11 @@ class Sidebar(Widget):
         self.styles.background = theme.background
         self._refresh_content()
 
+    def watch_language(self, _: str) -> None:
+        if not self.is_attached:
+            return
+        self._refresh_content()
+
     def _refresh_content(self) -> None:
         if not self.is_attached:
             return
@@ -57,11 +63,16 @@ class Sidebar(Widget):
             f"[{t.dim}]──────────────────[/]",
             f"[{t.primary}]{t.name}[/]",
             "",
+            f"[bold {t.accent}]LANGUAGE[/]",
+            f"[{t.dim}]──────────────────[/]",
+            f"[{t.primary}]{self.language}[/]",
+            "",
             f"[bold {t.accent}]CONTROLS[/]",
             f"[{t.dim}]──────────────────[/]",
-            f"[{t.dim}][T][/]   [{t.primary}]CYCLE THEME[/]",
-            f"[{t.dim}][↵][/]   [{t.primary}]SUBMIT[/]",
-            f"[{t.dim}][TAB][/] [{t.primary}]PRELOAD[/]",
-            f"[{t.dim}][Q][/]   [{t.primary}]QUIT[/]",
+            f"[{t.dim}][[T]][/]   [{t.primary}]CYCLE THEME[/]",
+            f"[{t.dim}][[L]][/]   [{t.primary}]CYCLE LANG[/]",
+            f"[{t.dim}][[↵]][/]   [{t.primary}]SUBMIT[/]",
+            f"[{t.dim}][[TAB]][/] [{t.primary}]PRELOAD[/]",
+            f"[{t.dim}][[Q]][/]   [{t.primary}]QUIT[/]",
         ]
         self.query_one("#sidebar-content", Static).update("\n".join(lines))

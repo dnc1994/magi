@@ -29,6 +29,9 @@ class InputBar(Widget):
         background: transparent;
         padding: 0;
     }
+    InputBar Input:focus {
+        border: none;
+    }
     """
 
     theme: reactive[Theme] = reactive(THEMES[0])

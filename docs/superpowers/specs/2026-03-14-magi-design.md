@@ -106,7 +106,7 @@ IDLE → SUBMITTED → DELIBERATING → VOTED → VERDICT → IDLE
 - Each computer runs an independent async timer (randomized 2–6 seconds)
 - During deliberation: data stream lines scroll faster, vote badge pulses
 - Each computer resolves independently — they do not wait for each other
-- Vote outcome is weighted random: split votes (2–1) are more likely than unanimous to create drama
+- Vote outcome is weighted random: ~70% chance of a split (2–1) vote, ~30% chance of unanimous — to create drama
 - When a computer finishes → transitions that computer to VOTED
 
 **VOTED**
@@ -118,7 +118,7 @@ IDLE → SUBMITTED → DELIBERATING → VOTED → VERDICT → IDLE
 **VERDICT**
 - Verdict banner shows final result: `APPROVED (2–1)`, `REJECTED (2–1)`, or `UNANIMOUS APPROVAL / REJECTION`
 - Banner is highlighted (bold, full-width)
-- Stays for 3 seconds, then full reset to IDLE
+- Stays for 3 seconds, then full reset to IDLE. All keypresses except `Q` are ignored during this 3-second window.
 - Activity log appends the final verdict line
 
 ---
@@ -148,13 +148,13 @@ IDLE → SUBMITTED → DELIBERATING → VOTED → VERDICT → IDLE
 
 ### Sidebar (`sidebar.py`)
 - Fixed width (~20 chars)
-- Sections: SYSTEM (uptime, total votes cast, votes today), THEME (current theme name), CONTROLS (keybinding reference)
+- Sections: SYSTEM (uptime since session start, total votes cast this session), THEME (current theme name), CONTROLS (keybinding reference)
 - Updates uptime every second, vote counts after each verdict
 
 ### InputBar (`input_bar.py`)
 - Text input field with `PROPOSAL ▸` prefix
-- `Tab` cycles preloaded proposals (fills input field, user can edit before submitting)
-- `Enter` submits; disabled during active vote
+- `Tab` cycles preloaded proposals in a wrap-around loop (fills input field, user can edit before submitting)
+- `Enter` submits; silently ignored if input is empty; disabled during active vote
 - Clears on reset to IDLE
 
 ---
@@ -186,6 +186,10 @@ IDLE → SUBMITTED → DELIBERATING → VOTED → VERDICT → IDLE
 | `Q` / `Ctrl+C` | Quit |
 
 ---
+
+## Terminal Requirements
+
+Minimum terminal size: **120 columns × 30 rows**. The app does not gracefully degrade below this — it will display a warning and exit if the terminal is too small.
 
 ## Out of Scope
 

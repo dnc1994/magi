@@ -7,7 +7,7 @@ name = "magi"
 version = "0.1.0"
 description = "MAGI System terminal GUI — Evangelion voting simulator"
 requires-python = ">=3.9"
-dependencies = ["textual>=0.70.0"]
+dependencies = ["textual>=0.70.0", "httpx>=0.27.0", "python-dotenv>=1.0"]
 
 [project.scripts]
 magi = "magi.main:main"
