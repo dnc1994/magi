@@ -7,6 +7,7 @@ from magi.widgets.activity_log import ActivityLog
 from magi.widgets.sidebar import Sidebar
 from magi.widgets.verdict import VerdictBanner
 from magi.widgets.input_bar import InputBar
+from magi.widgets.magi_panel import MagiPanel
 
 
 class HeaderTestApp(App):
@@ -115,3 +116,40 @@ async def test_input_bar_disable_prevents_submit():
         bar.disable()
         from textual.widgets import Input
         assert pilot.app.query_one(Input).disabled
+
+
+class PanelTestApp(App):
+    def compose(self) -> ComposeResult:
+        yield MagiPanel("MELCHIOR", "1")
+
+
+@pytest.mark.asyncio
+async def test_magi_panel_mounts():
+    async with PanelTestApp().run_test() as pilot:
+        assert pilot.app.query_one(MagiPanel) is not None
+
+
+@pytest.mark.asyncio
+async def test_magi_panel_idle_badge():
+    async with PanelTestApp().run_test() as pilot:
+        panel = pilot.app.query_one(MagiPanel)
+        badge = str(pilot.app.query_one("#badge", Static).content)
+        assert "STANDBY" in badge
+
+
+@pytest.mark.asyncio
+async def test_magi_panel_voted_approved():
+    async with PanelTestApp().run_test() as pilot:
+        panel = pilot.app.query_one(MagiPanel)
+        panel.set_state("VOTED", "APPROVED")
+        badge = str(pilot.app.query_one("#badge", Static).content)
+        assert "APPROVED" in badge
+
+
+@pytest.mark.asyncio
+async def test_magi_panel_voted_rejected():
+    async with PanelTestApp().run_test() as pilot:
+        panel = pilot.app.query_one(MagiPanel)
+        panel.set_state("VOTED", "REJECTED")
+        badge = str(pilot.app.query_one("#badge", Static).content)
+        assert "REJECTED" in badge
